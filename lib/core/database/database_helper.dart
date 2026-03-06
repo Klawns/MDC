@@ -45,7 +45,7 @@ class TursoHttpClient {
     // If we are on web, use the local Vercel Serverless proxy to avoid CORS
     if (kIsWeb) {
       final origin = web.window.location.origin;
-      uri = Uri.parse('\$origin/api/turso');
+      uri = Uri.parse('$origin/api/turso');
     } else {
       // Android / Linux bypasses CORS, use native connection
       uri = Uri.parse(url.replaceFirst('libsql://', 'https://') + '/v2/pipeline');
