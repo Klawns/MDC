@@ -13,7 +13,10 @@ class TursoHttpClient {
   Future<Map<String, dynamic>> execute(String sql, [List<dynamic> args = const []]) async {
     final formattedArgs = args.map((arg) {
       if (arg is int || arg is double) {
-        return {"type": "float", "value": arg.toString()};
+        return {
+          "type": arg is int ? "integer" : "float", 
+          "value": arg
+        };
       } else if (arg == null) {
         return {"type": "null"};
       }
