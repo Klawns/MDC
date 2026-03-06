@@ -18,6 +18,13 @@ export PATH="$PATH:$PWD/flutter/bin"
 echo "Downloading dependencies..."
 flutter pub get
 
+# Generate .env file from Vercel's injected environment variables
+echo "Generating .env file..."
+cat << EOF > .env
+TURSO_URL=$TURSO_URL
+TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN
+EOF
+
 # Build Web Project
 echo "Building Flutter Web..."
 flutter build web
