@@ -63,14 +63,19 @@ class TursoHttpClient {
       
       // If our serverless proxy throws an error from Turso credentials missing:
       if (jsonResponse is Map && jsonResponse.containsKey('error')) {
-        throw Exception('Serverless Error: \${jsonResponse['error']}');
+        final err = jsonResponse['error'].toString();
+        throw Exception('Serverless Error: $err');
       }
 
       final results = jsonResponse['results'] as List<dynamic>?;
       if (results != null && results.isNotEmpty && results[0]['type'] == 'ok') {
         return results[0]['response']['result'];
       } else {
-        throw Exception('Turso Error: \${results?[0]['error']?['message'] ?? 'Unknown JSON Format'}');
+        String msg = 'Unknown JSON Format';
+        if (results != null && results.isNotEmpty && results[0]['error'] != null) {
+          msg = results[0]['error']['message'] ?? msg;
+        }
+        throw Exception('Turso Error: $msg');
       }
     } else {
       throw Exception('HTTP Error \${response.statusCode}: \${response.body}');
