@@ -67,7 +67,7 @@ class TursoHttpClient {
       if (jsonResponse is Map && jsonResponse.containsKey('http_status')) {
          statusCode = jsonResponse['http_status'];
          if (statusCode != 200) {
-           final err = jsonResponse['error'] ?? jsonResponse['message'] ?? 'Unknown Turso error: \${response.body}';
+           final err = jsonResponse['error'] ?? jsonResponse['message'] ?? 'Unknown Turso error: ${response.body}';
            throw Exception('Turso API Error (Status $statusCode): $err');
          }
       }
@@ -93,7 +93,7 @@ class TursoHttpClient {
         throw Exception('Turso Error: $msg');
       }
     } else {
-      throw Exception('HTTP Error $statusCode: \${response.body}');
+      throw Exception('HTTP Error $statusCode: ${response.body}');
     }
   }
 
