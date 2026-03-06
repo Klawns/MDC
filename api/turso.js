@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const token = process.env.TURSO_AUTH_TOKEN;
 
   if (!urlStr || !token) {
-    return res.status(500).json({ error: "Missing Turso credentials in Vercel environment." });
+    return res.status(200).json({ error: "Missing Turso credentials in Vercel environment.", http_status: 500 });
   }
 
   const finalUrl = urlStr.replace('libsql://', 'https://') + '/v2/pipeline';
@@ -42,8 +42,13 @@ export default async function handler(req, res) {
     } catch (e) {
       data = { error: textRes || "Unknown Turso Error" };
     }
-    return res.status(fetchRes.status).json(data);
+
+    // Always return 200 so the browser does not swallow the JSON error block
+    return res.status(200).json({
+      http_status: fetchRes.status,
+      ...data
+    });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(200).json({ error: e.message, http_status: 500 });
   }
 }

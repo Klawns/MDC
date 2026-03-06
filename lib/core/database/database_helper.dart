@@ -20,15 +20,16 @@ class TursoHttpClient {
       return {"type": "text", "value": arg.toString()};
     }).toList();
 
+    final Map<String, dynamic> stmt = {
+      "sql": sql,
+      "args": formattedArgs,
+    };
+
     final body = {
       "requests": [
         {
           "type": "execute",
-          "stmt": {
-            "sql": sql,
-            "args": formattedArgs,
-            "named_args": []
-          }
+          "stmt": stmt
         },
         {
           "type": "close"
@@ -58,11 +59,25 @@ class TursoHttpClient {
       body: jsonEncode(body),
     );
 
-    if (response.statusCode == 200) {
+    int statusCode = response.statusCode;
+    
+    // Web returns HTTP 200 with embedded status for error visibility bypass
+    if (kIsWeb && response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      if (jsonResponse is Map && jsonResponse.containsKey('http_status')) {
+         statusCode = jsonResponse['http_status'];
+         if (statusCode != 200) {
+           final err = jsonResponse['error'] ?? jsonResponse['message'] ?? 'Unknown Turso error: \${response.body}';
+           throw Exception('Turso API Error (Status $statusCode): $err');
+         }
+      }
+    }
+
+    if (statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
       
       // If our serverless proxy throws an error from Turso credentials missing:
-      if (jsonResponse is Map && jsonResponse.containsKey('error')) {
+      if (jsonResponse is Map && jsonResponse.containsKey('error') && !jsonResponse.containsKey('results')) {
         final err = jsonResponse['error'].toString();
         throw Exception('Serverless Error: $err');
       }
@@ -78,7 +93,7 @@ class TursoHttpClient {
         throw Exception('Turso Error: $msg');
       }
     } else {
-      throw Exception('HTTP Error \${response.statusCode}: \${response.body}');
+      throw Exception('HTTP Error $statusCode: \${response.body}');
     }
   }
 
