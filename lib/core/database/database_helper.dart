@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:web/web.dart' as web;
 
 class TursoHttpClient {
   final String url;
@@ -43,7 +44,8 @@ class TursoHttpClient {
 
     // If we are on web, use the local Vercel Serverless proxy to avoid CORS
     if (kIsWeb) {
-      uri = Uri.parse('/api/turso');
+      final origin = web.window.location.origin;
+      uri = Uri.parse('\$origin/api/turso');
     } else {
       // Android / Linux bypasses CORS, use native connection
       uri = Uri.parse(url.replaceFirst('libsql://', 'https://') + '/v2/pipeline');
