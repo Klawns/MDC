@@ -8,7 +8,9 @@ import '../../core/widgets/mdc_input.dart';
 import '../../core/widgets/primary_button.dart';
 
 class RideFormScreen extends ConsumerStatefulWidget {
-  const RideFormScreen({super.key});
+  final Client? initialClient;
+
+  const RideFormScreen({super.key, this.initialClient});
 
   @override
   ConsumerState<RideFormScreen> createState() => _RideFormScreenState();
@@ -21,6 +23,12 @@ class _RideFormScreenState extends ConsumerState<RideFormScreen> {
   final TextEditingController _noteController = TextEditingController();
 
   final List<double> _defaultValues = [10.0, 15.0, 20.0, 25.0];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedClient = widget.initialClient;
+  }
 
   @override
   void dispose() {

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/providers/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/mdc_card.dart';
 import '../../core/widgets/primary_button.dart';
-import '../rides/ride_form_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onNavigateToClients;
+  
+  const DashboardScreen({super.key, this.onNavigateToClients});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +37,9 @@ class DashboardScreen extends ConsumerWidget {
 
           final todayTotal = todayRides.fold(0.0, (sum, item) => sum + item.value);
           final weekTotal = weekRides.fold(0.0, (sum, item) => sum + item.value);
+          
+          final todayAverage = todayRides.isEmpty ? 0.0 : todayTotal / todayRides.length;
+          final weekAverage = weekRides.isEmpty ? 0.0 : weekTotal / weekRides.length;
 
           return ListView(
             padding: const EdgeInsets.all(16.0),
@@ -58,7 +63,7 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${todayRides.length} corridas',
+                      '${todayRides.length} corridas • Média: ${currencyFormatter.format(todayAverage)}',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -86,7 +91,7 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${weekRides.length} corridas',
+                      '${weekRides.length} corridas • Média: ${currencyFormatter.format(weekAverage)}',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -96,13 +101,12 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               PrimaryButton(
-                text: 'Nova Corrida',
-                icon: Icons.add,
+                text: 'Meus Clientes',
+                icon: LucideIcons.users,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RideFormScreen()),
-                  );
+                  if (onNavigateToClients != null) {
+                    onNavigateToClients!();
+                  }
                 },
               ),
             ],

@@ -5,6 +5,8 @@ import '../../core/models/client.dart';
 import '../../core/providers/providers.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/mdc_card.dart';
+import '../rides/ride_form_screen.dart';
+import 'client_details_screen.dart';
 import 'client_form_screen.dart';
 
 class ClientsScreen extends ConsumerStatefulWidget {
@@ -80,7 +82,12 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: MdcCard(
                         onTap: () {
-                          // Action on tap, e.g. Add ride for this client
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClientDetailsScreen(client: client),
+                            ),
+                          );
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,7 +119,20 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                             Row(
                               children: [
                                 IconButton(
+                                  icon: const Icon(LucideIcons.plusCircle, size: 20, color: AppTheme.primaryBlue),
+                                  tooltip: 'Nova Corrida',
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => RideFormScreen(initialClient: client),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
                                   icon: const Icon(LucideIcons.edit2, size: 20, color: AppTheme.secondaryBlue),
+                                  tooltip: 'Editar Cliente',
                                   onPressed: () {
                                     Navigator.push(
                                       context,
@@ -124,6 +144,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                 ),
                                 IconButton(
                                   icon: const Icon(LucideIcons.trash2, size: 20, color: AppTheme.statusCanceled),
+                                  tooltip: 'Excluir Cliente',
                                   onPressed: () {
                                     _confirmDelete(context, client);
                                   },
