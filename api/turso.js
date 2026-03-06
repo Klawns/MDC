@@ -19,6 +19,8 @@ export default async function handler(req, res) {
 
   const finalUrl = urlStr.replace('libsql://', 'https://') + '/v2/pipeline';
 
+  const bodyData = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+
   try {
     const fetchRes = await fetch(finalUrl, {
       method: req.method,
@@ -26,12 +28,22 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(req.body)
+      body: bodyData
     });
 
-    const data = await fetchRes.json();
+    const textRes = await fetchRes.text();
+    let data;
+    try {
+      if (textRes) {
+        data = JSON.parse(textRes);
+      } else {
+        data = { error: "Empty response from Turso" };
+      }
+    } catch (e) {
+      data = { error: textRes || "Unknown Turso Error" };
+    }
     return res.status(fetchRes.status).json(data);
-  } catch(e) {
+  } catch (e) {
     return res.status(500).json({ error: e.message });
   }
 }
