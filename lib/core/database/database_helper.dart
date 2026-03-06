@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class TursoHttpClient {
   final String url;
@@ -9,9 +10,6 @@ class TursoHttpClient {
   TursoHttpClient({required this.url, required this.token});
 
   Future<Map<String, dynamic>> execute(String sql, [List<dynamic> args = const []]) async {
-    final uri = Uri.parse(url.replaceFirst('libsql://', 'https://') + '/v2/pipeline');
-    
-    // Formatting args for Turso API
     final formattedArgs = args.map((arg) {
       if (arg is int || arg is double) {
         return {"type": "float", "value": arg.toString()};
@@ -37,31 +35,46 @@ class TursoHttpClient {
       ]
     };
 
+    Uri uri;
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    // If we are on web, use the local Vercel Serverless proxy to avoid CORS
+    if (kIsWeb) {
+      uri = Uri.parse('/api/turso');
+    } else {
+      // Android / Linux bypasses CORS, use native connection
+      uri = Uri.parse(url.replaceFirst('libsql://', 'https://') + '/v2/pipeline');
+      headers['Authorization'] = 'Bearer $token';
+    }
+
     final response = await http.post(
       uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+      headers: headers,
       body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
-      final results = jsonResponse['results'] as List<dynamic>;
       
-      if (results.isNotEmpty && results[0]['type'] == 'ok') {
-        final res = results[0]['response']['result'];
-        return res;
+      // If our serverless proxy throws an error from Turso credentials missing:
+      if (jsonResponse is Map && jsonResponse.containsKey('error')) {
+        throw Exception('Serverless Error: \${jsonResponse['error']}');
+      }
+
+      final results = jsonResponse['results'] as List<dynamic>?;
+      if (results != null && results.isNotEmpty && results[0]['type'] == 'ok') {
+        return results[0]['response']['result'];
       } else {
-        throw Exception("Turso Error: \${results[0]['error']?['message'] ?? 'Unknown Error'}");
+        throw Exception('Turso Error: \${results?[0]['error']?['message'] ?? 'Unknown JSON Format'}');
       }
     } else {
-      throw Exception("HTTP Error \${response.statusCode}: \${response.body}");
+      throw Exception('HTTP Error \${response.statusCode}: \${response.body}');
     }
   }
 
-  // Helper method to execute and turn the column-based response into List of maps
   Future<List<Map<String, dynamic>>> query(String sql, [List<dynamic> args = const []]) async {
     final result = await execute(sql, args);
     
@@ -79,9 +92,7 @@ class TursoHttpClient {
         final valNode = row[i];
         var val = valNode['value'];
         
-        // Handle Turso's JSON format ({ "type": "...", "value": ... })
         if (valNode['type'] == 'float' || valNode['type'] == 'integer') {
-          // Both returned as strings from turso sometimes, parse it
           val = num.tryParse(val.toString());
           if (val != null && val % 1 == 0) {
              val = val.toInt();
@@ -113,9 +124,7 @@ class DatabaseHelper {
     final token = dotenv.env['TURSO_AUTH_TOKEN'] ?? '';
     
     final dbClient = TursoHttpClient(url: url, token: token);
-    
     await _createDB(dbClient);
-    
     return dbClient;
   }
 
@@ -172,7 +181,5 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> close() async {
-    // No-op for HTTP client
-  }
+  Future<void> close() async {}
 }
